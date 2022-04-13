@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import {auth, provider} from '../firebase';
 import { useSelector, useDispatch } from 'react-redux';
@@ -6,10 +7,19 @@ import { useNavigate }  from 'react-router-dom'
 
 const Header = (props) => {
 
-    const history = useNavigate()
+    const navigate = useNavigate()
     const dispatch = useDispatch()
-    const username = useSelector(selectUserName)
-    const userphoto = useSelector(selectUserPhoto)
+    const userName = useSelector(selectUserName)
+    const userPhoto = useSelector(selectUserPhoto)
+
+    useEffect(() => {
+        auth.onAuthStateChanged( (user) => {
+            if(user) {
+                setUser(user);
+                navigate("/home");
+            }
+        })
+    }, [userName])
 
     const handleAuth = () => {
         auth.signInWithPopup(provider)
@@ -18,6 +28,20 @@ const Header = (props) => {
         })
         .catch((e) => {
             alert(e.message)
+        })
+    }
+    const handleSignOut = () => {
+        auth.signOut()
+        .then( () => {
+            dispatch(setUserLoginDetails({
+                name: null,
+                email: null,
+                photo: null
+            }))
+            navigate('/')
+        })
+        .catch(e => {
+            console.log(e.message)
         })
     }
 
@@ -35,8 +59,8 @@ const Header = (props) => {
             <Logo>
                 <img src='/images/logo.svg' alt="Disney+" />
             </Logo>
-            {!username ? 
-            <Login onClick={handleAuth}>Login</Login>
+            {!userName ?
+                <Login onClick={handleAuth}>Login</Login>
             : 
             <>
                 <NavManu>
@@ -65,7 +89,10 @@ const Header = (props) => {
                         <span>SERIES</span>
                     </a>
                 </NavManu>
-                <UserImg src={userphoto} alt={username} />
+                <SignOut>
+                    <UserImg src={userPhoto} alt={userName} />
+                    <DropDown onClick={handleSignOut}>Sign Out</DropDown>
+                </SignOut>
             </>}
         </Nav>
     )
@@ -176,9 +203,61 @@ const Login = styled.a`
     }
 `;
 
+const SignUp = styled.a`
+    background-color: rgba(0,0,0,0.5);
+    padding: 10px 16px;
+    text-transform: uppercase;
+    border: 1px solid #f9f9f9;
+    border-radius: 4px;
+    transition: all .3s ease 0s;
+    
+    &:hover{
+        background-color: #f9f9f9;
+        color: #000;
+        border-color: transparent;
+        cursor: pointer
+    }
+`;
+
 const UserImg = styled.img`
-    height: 60%;
-    border-radius: 50%
+    width: 100%
+`;
+
+
+const DropDown = styled.div`
+    position: absolute;
+    top: 50px;
+    background-color: rgb(19,19,19);
+    border: 1px solid rgba(151,151,151,0.34);
+    border-radius: 4px;
+    box-shadow: rgb(0 0 0 / 50%) 0px 0px 18px 0px;
+    padding: 10px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    width: 100px;
+    opacity: 0;
+    text-align: center
+`;
+
+const SignOut = styled.div`
+    position: relative;
+    width: 48px;
+    height: 48px;  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;  
+    ${UserImg}{
+        border-radius: 50%;
+        height: 100%;
+        width: 100%
+    }
+    &:hover{
+        ${DropDown}{
+            opacity: 1;
+            transition-duration: 1s;
+        }
+    }
 `;
 
 export default Header;
