@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import styled from 'styled-components';
 import {auth, provider} from '../firebase';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectUserName, selectUserEmail, selectUserPhoto, setUserLoginDetails} from '../features/user/userSlice';
+import { selectUserName, selectUserEmail, selectUserPhoto, setUserLoginDetails, setSignOutState} from '../features/user/userSlice';
 import { useNavigate }  from 'react-router-dom'
 
 const Header = (props) => {
@@ -13,36 +13,35 @@ const Header = (props) => {
     const userPhoto = useSelector(selectUserPhoto)
 
     useEffect(() => {
-        auth.onAuthStateChanged( (user) => {
-            if(user) {
-                setUser(user);
-                navigate("/home");
-            }
-        })
+       auth.onAuthStateChanged( (user) => {
+           if(user){
+               navigate("/home")
+               setUser(user)
+           }
+       })
     }, [userName])
 
     const handleAuth = () => {
-        auth.signInWithPopup(provider)
-        .then((result) => {
-            setUser(result.user);
-        })
-        .catch((e) => {
-            alert(e.message)
-        })
-    }
-    const handleSignOut = () => {
-        auth.signOut()
-        .then( () => {
-            dispatch(setUserLoginDetails({
-                name: null,
-                email: null,
-                photo: null
-            }))
-            navigate('/')
-        })
-        .catch(e => {
-            console.log(e.message)
-        })
+        if(!userName){
+            auth.signInWithPopup(provider)
+            .then((result) => {
+                setUser(result.user);
+            })
+            .catch((e) => {
+                alert(e.message)
+            })
+        }
+        else if(userName){
+            auth.signOut()
+            .then( () => {
+                dispatch(setSignOutState())
+                navigate('/')
+            })
+            .catch(e => {
+                console.log(e.message)
+            })
+        }
+        
     }
 
     const setUser = (user) => {
@@ -91,7 +90,7 @@ const Header = (props) => {
                 </NavManu>
                 <SignOut>
                     <UserImg src={userPhoto} alt={userName} />
-                    <DropDown onClick={handleSignOut}>Sign Out</DropDown>
+                    <DropDown onClick={handleAuth}>Sign Out</DropDown>
                 </SignOut>
             </>}
         </Nav>
@@ -203,22 +202,6 @@ const Login = styled.a`
     }
 `;
 
-const SignUp = styled.a`
-    background-color: rgba(0,0,0,0.5);
-    padding: 10px 16px;
-    text-transform: uppercase;
-    border: 1px solid #f9f9f9;
-    border-radius: 4px;
-    transition: all .3s ease 0s;
-    
-    &:hover{
-        background-color: #f9f9f9;
-        color: #000;
-        border-color: transparent;
-        cursor: pointer
-    }
-`;
-
 const UserImg = styled.img`
     width: 100%
 `;
@@ -230,7 +213,6 @@ const DropDown = styled.div`
     background-color: rgb(19,19,19);
     border: 1px solid rgba(151,151,151,0.34);
     border-radius: 4px;
-    box-shadow: rgb(0 0 0 / 50%) 0px 0px 18px 0px;
     padding: 10px;
     font-size: 14px;
     letter-spacing: 2px;
@@ -245,7 +227,8 @@ const SignOut = styled.div`
     height: 48px;  
     display: flex;
     align-items: center;
-    justify-content: center;
+    // justify-content: center;
+    flex-direction: column;
     cursor: pointer;  
     ${UserImg}{
         border-radius: 50%;
