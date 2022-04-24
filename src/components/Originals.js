@@ -2,25 +2,45 @@ import styled from 'styled-components';
 import {Link} from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectOriginal } from '../features/movie/movieSlice';
+import PropagateLoader from "react-spinners/PropagateLoader";
+import { useEffect, useState } from "react";
 
 const Originals = props => {
 
     const movies = useSelector(selectOriginal);
+    const [loading, setLoading] = useState(false)
+    let [color, setColor] = useState("#ffffff");
+
+    useEffect( () => {
+        setLoading(true)
+        const timer =  setTimeout( () => { 
+            if(movies) setLoading(false) 
+        }, 500)
+
+        return () => clearTimeout(timer)
+    },[movies])
 
     return (
         <Container>
             <h4>Originals</h4>
-            <Content>
-                {
-                    movies && movies.map( (movie, key) => (
-                        <Wrap key={key}>
-                            <Link to = {`/detail/`+movie.id}>
-                                <img src={movie.cardImg} alt={movie.title} />
-                            </Link>
-                        </Wrap>
-                    ))
-                }
-            </Content>
+            {
+                loading ?
+                <Loader>
+                    <PropagateLoader color={color} loading={loading} size={10} />
+                </Loader>
+                :
+                <Content>
+                    {
+                        movies && movies.map( (movie, key) => (
+                            <Wrap key={key}>
+                                <Link to = {`/detail/`+movie.id}>
+                                    <img src={movie.cardImg} alt={movie.title} />
+                                </Link>
+                            </Wrap>
+                        ))
+                    }
+                </Content>
+            }
         </Container>
     )
 }
@@ -70,6 +90,12 @@ const Wrap = styled.div`
         border-color: rgba(249, 249, 249, 0.8);
         opacity: 0.8
     }
+`;
+
+const Loader = styled.div`
+    display: grid;
+    place-items: center;
+    margin: 20px 0;
 `;
 
 export default Originals;
