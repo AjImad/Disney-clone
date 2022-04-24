@@ -1,4 +1,4 @@
-#Demo:
+# Demo
 https://disneyplus-clone-7ba28.web.app/
 
 # What is the project?
